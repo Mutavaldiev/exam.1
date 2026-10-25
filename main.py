@@ -56,6 +56,58 @@ async def help_handler(message: Message):
 📋 /my_bookings — Show your bookings
 """)
 
+
+
+@dp.message(Command("show_profile"))
+@dp.message(F.text == "👤 Profile")
+async def show_profile(message: Message):
+    user = await get_user_by_id(message.from_user.id)
+
+    if not user:
+        await message.answer("❌ User not found! Use /start first.")
+        return
+
+    await message.answer(f"""
+👤 Your Profile
+
+🆔 Telegram ID: {message.from_user.id}
+📛 Full Name: {user['full_name']}
+🔗 Username: @{user['username']}
+📅 Joined: {user['created_at']}
+""")
+
+
+@dp.message(Command("add_class"))
+async def add_class_handler(message: Message, command: CommandObject):
+    if not command.args:
+        await message.answer(f"""
+➕ Add a Class
+📌 Example: /add_class Yoga/10
+📝 Format: /add_class Title/Capacity
+""")
+        return
+
+    if not await check_admin(message.from_user.id):
+        await message.answer("❌ Only admins can add classes!")
+        return
+
+    data = command.args.split("/")
+    title = data[0]
+    capacity = int(data[1])
+
+    result = await add_class(title, capacity)
+
+    if result:
+        await message.answer(f"""
+✅ Class added successfully!
+
+🆔 Class ID: {result['classes_id']}
+📚 Title: {title}
+👥 Capacity: {capacity}
+""")
+    else:
+        await message.answer("❌ Failed to add class.")
+
 async def main():
     await create_table_db()
     print("Bot started")
