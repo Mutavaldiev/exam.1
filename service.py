@@ -99,3 +99,35 @@ async def book_class(telegram_id, class_id):
         return "error"
     finally:
         await conn.close()
+
+
+async def cancel_booking(telegram_id, booking_id):
+    conn = await connection_db()
+
+    if conn is None:
+        return "Database connection error."
+
+    try:
+        result = await conn.execute(
+            """
+            DELETE FROM bookings
+            WHERE bookings_id = $1
+            AND telegram_id = $2
+            """,
+            booking_id,
+            telegram_id
+        )
+
+        if result == "DELETE 1":
+            return "Booking cancelled successfully."
+
+        return "Booking not found."
+
+    except Exception as e:
+        print(f"Cancel booking error: {e}")
+        return "An error occurred while cancelling booking."
+
+    finally:
+        await conn.close()
+
+

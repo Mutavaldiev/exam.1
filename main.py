@@ -109,6 +109,8 @@ async def add_class_handler(message: Message, command: CommandObject):
         await message.answer("❌ Failed to add class.")
 
 
+
+
 @dp.message(Command("classes"))
 @dp.message(F.text == "🏋️ Classes")
 async def classes_handler(message: Message):
@@ -131,6 +133,7 @@ async def classes_handler(message: Message):
 """
 
     await message.answer(text)
+
 
 
 @dp.message(Command("book"))
@@ -158,6 +161,27 @@ async def book_handler(message: Message, command: CommandObject):
         await message.answer("✅ Your booking was successful!")
     else:
         await message.answer("❌ Booking failed.")
+
+
+
+@dp.message(Command("cancel_booking"))
+async def cancel_booking_handler(message: Message, command: CommandObject):
+    if not command.args:
+        await message.answer("Please provide booking ID. Example: /cancel_booking 1")
+        return
+
+    try:
+        booking_id = int(command.args)
+    except ValueError:
+        await message.answer("Booking ID must be a number.")
+        return
+
+    result = await cancel_booking(
+        message.from_user.id,
+        booking_id
+    )
+
+    await message.answer(result)
 
 
 async def main():
