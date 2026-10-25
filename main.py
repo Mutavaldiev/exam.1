@@ -108,6 +108,58 @@ async def add_class_handler(message: Message, command: CommandObject):
     else:
         await message.answer("❌ Failed to add class.")
 
+
+@dp.message(Command("classes"))
+@dp.message(F.text == "🏋️ Classes")
+async def classes_handler(message: Message):
+    classes = await get_all_classes()
+
+    if not classes:
+        await message.answer("📭 No classes available.")
+        return
+
+    text = "🏋️ Available Classes:"
+
+    for gym_class in classes:
+        text += f"""
+🆔 Class ID: {gym_class['classes_id']}
+📚 Title: {gym_class['title']}
+👥 Capacity: {gym_class['capacity']}
+✅ Free Places: {gym_class['free_places']}
+📅 Date: {gym_class['class_date']}
+
+"""
+
+    await message.answer(text)
+
+
+@dp.message(Command("book"))
+async def book_handler(message: Message, command: CommandObject):
+    if not command.args:
+        await message.answer(f"""
+📝 Book a Class
+📌 Example: /book 1
+🔢 Enter the class ID after the command.
+""")
+        return
+
+    data = command.args.split("/")
+    class_id = int(data[0])
+
+    result = await book_class(message.from_user.id, class_id)
+
+    if result == "not found":
+        await message.answer("❌ Class not found.")
+    elif result == "full":
+        await message.answer("😔 This class is full.")
+    elif result == "already_booked":
+        await message.answer("⚠️ You have already booked this class.")
+    elif result == "success":
+        await message.answer("✅ Your booking was successful!")
+    else:
+        await message.answer("❌ Booking failed.")
+
+
 async def main():
     await create_table_db()
     print("Bot started")

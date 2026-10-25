@@ -57,3 +57,45 @@ async def get_all_classes():
         print(f"Get classes Error: {Error}")
     finally:
         await conn.close()
+
+
+async def book_class(telegram_id, class_id):
+    try:
+        conn = await connection_db()
+
+        class_info = await conn.fetchrow("""
+        select * from classes
+        where classes_id = $1 and is_active = true
+        """, class_id)
+
+        if not class_info:
+            return "not found"
+
+        booking = await conn.fetchrow("""
+        select * from bookings
+        where telegram_id = $1 and class_id = $2 and is_active = true
+        """, str(telegram_id), class_id)
+
+        if booking:
+            return "already_booked"
+
+        count = await conn.fetchval("""
+        select count(*) from bookings
+        where class_id = $1 and is_active = true
+        """, class_id)
+
+        if count >= class_info["capacity"]:
+            return "full"
+
+        await conn.execute("""
+        insert into bookings(telegram_id, class_id) values
+        ($1, $2)
+        """, str(telegram_id), class_id)
+
+        return "success"
+
+    except Exception as Error:
+        print(f"Book class Error: {Error}")
+        return "error"
+    finally:
+        await conn.close()
