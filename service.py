@@ -131,3 +131,28 @@ async def cancel_booking(telegram_id, booking_id):
         await conn.close()
 
 
+async def get_my_bookings(telegram_id):
+    conn = await connection_db()
+
+    if conn is None:
+        return []
+
+    try:
+        bookings = await conn.fetch(
+            """
+            SELECT c.classes_id, c.title, c.class_date FROM bookings b
+            JOIN classes c ON b.class_id = c.classes_id
+            WHERE b.telegram_id = $1 AND b.is_active = TRUE AND c.is_active = TRUE
+            ORDER BY c.class_date
+            """,
+            str(telegram_id)
+        )
+
+        return bookings
+
+    except Exception as Error:
+        print(f"Get my bookings Error: {Error}")
+        return []
+
+    finally:
+        await conn.close()

@@ -184,6 +184,58 @@ async def cancel_booking_handler(message: Message, command: CommandObject):
     await message.answer(result)
 
 
+@dp.message(Command("my_bookings"))
+@dp.message(F.text == "📝 My Bookings")
+async def my_bookings_handler(message: Message):
+    bookings = await get_my_bookings(message.from_user.id)
+
+    if not bookings:
+        await message.answer("📭 You have no bookings yet.")
+        return
+
+    text = "📝 Your Bookings:\n\n"
+
+    for gym_class in bookings:
+        text += f"""\
+🆔 Class ID: {gym_class['classes_id']}
+📚 Title: {gym_class['title']}
+📅 Date: {gym_class['class_date']}
+
+"""
+
+    await message.answer(text)
+
+
+async def check_admin(telegram_id):
+    conn = None
+
+    try:
+        conn = await connection_db()
+
+        if conn is None:
+            return False
+
+        user = await conn.fetchrow(
+            """
+            SELECT is_admin FROM users
+            WHERE telegram_id = $1
+            """,
+            str(telegram_id)
+        )
+
+        if user and user["is_admin"]:
+            return True
+
+        return False
+
+    except Exception as Error:
+        print(f"Check admin Error: {Error}")
+        return False
+
+    finally:
+        if conn is not None:
+            await conn.close()
+
 async def main():
     await create_table_db()
     print("Bot started")
